@@ -15,7 +15,7 @@ export type Insights = {
   anomalies: string[];
   recommendations: string[];
   voiceScript: string;
-  pythonExtraction?: unknown;
+  pythonExtraction: Record<string, unknown> | null;
 };
 
 export const analyzeDashboard = createServerFn({ method: "POST" })
@@ -26,7 +26,7 @@ export const analyzeDashboard = createServerFn({ method: "POST" })
     if (!LOVABLE_API_KEY) return { insights: null, error: "LOVABLE_API_KEY missing" };
 
     // 1. Optional Python preprocessing/extraction
-    let pythonExtraction: unknown = null;
+    let pythonExtraction: Record<string, unknown> | null = null;
     const pyUrl = process.env.PYTHON_ANALYSIS_URL;
     const pyToken = process.env.PYTHON_ANALYSIS_TOKEN;
     if (pyUrl) {
