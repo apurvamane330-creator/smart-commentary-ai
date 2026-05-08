@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Insights } from "@/lib/analyze.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Play, Pause, Square, Download, Copy, FileDown, Sparkles, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
+import { Play, Pause, Square, Download, Copy, FileDown, Sparkles, TrendingUp, AlertTriangle, Lightbulb, RotateCcw, Volume2, VolumeX, MessageSquareQuote } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
