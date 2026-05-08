@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
 import { UploadCloud, Loader2, Image as ImageIcon } from "lucide-react";
