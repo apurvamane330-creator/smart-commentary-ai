@@ -21,6 +21,7 @@ function SettingsPage() {
   const [voice, setVoice] = useState("en-US-Neural2-D");
   const [speed, setSpeed] = useState(1);
   const [autoDownload, setAutoDownload] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -29,6 +30,8 @@ function SettingsPage() {
       if (!data) return;
       setLanguage(data.language); setVoice(data.voice);
       setSpeed(Number(data.speed)); setAutoDownload(data.auto_download);
+      // @ts-expect-error new column
+      if (typeof data.auto_play === "boolean") setAutoPlay(data.auto_play);
     });
   }, [user]);
 
@@ -36,8 +39,8 @@ function SettingsPage() {
     if (!user) return;
     setSaving(true);
     const { error } = await supabase.from("settings").upsert({
-      user_id: user.id, language, voice, speed, auto_download: autoDownload, theme: "dark",
-    });
+      user_id: user.id, language, voice, speed, auto_download: autoDownload, auto_play: autoPlay, theme: "dark",
+    } as never);
     setSaving(false);
     if (error) toast.error(error.message); else toast.success("Settings saved");
   };
