@@ -116,41 +116,77 @@ export function ReportView({
         <img src={imageUrl} alt="Uploaded dashboard" className="w-full rounded-lg" />
       </Card>
 
-      {audioUrl && (
-        <Card className="p-4 glass">
-          <div className="flex items-center gap-3">
-            <Button onClick={togglePlay} size="icon" className="bg-gradient-primary text-primary-foreground shadow-glow">
-              {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            <Button onClick={stop} size="icon" variant="secondary"><Square className="h-4 w-4" /></Button>
-            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-              <div className="h-full bg-gradient-primary transition-all" style={{ width: `${progress}%` }} />
-            </div>
-            <select
-              value={speed}
-              onChange={(e) => { const s = parseFloat(e.target.value); setSpeed(s); if (audioRef.current) audioRef.current.playbackRate = s; }}
-              className="bg-secondary text-sm rounded px-2 py-1 border border-border"
-            >
-              {[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => <option key={s} value={s}>{s}x</option>)}
-            </select>
+      <Card className="p-5 glass">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-8 w-8 rounded-lg bg-gradient-primary/20 grid place-items-center">
+            <MessageSquareQuote className="h-4 w-4 text-primary" />
           </div>
-          <audio
-            ref={audioRef} src={audioUrl} preload="metadata"
-            onTimeUpdate={(e) => { const a = e.currentTarget; setProgress((a.currentTime / (a.duration || 1)) * 100); }}
-            onEnded={() => { setPlaying(false); setProgress(0); }}
-          />
-          {playing && (
-            <div className="mt-3 flex items-end gap-1 h-8 justify-center">
-              {Array.from({ length: 24 }).map((_, i) => (
-                <motion.div key={i} className="w-1 bg-gradient-primary rounded-full"
-                  animate={{ height: ["20%", "100%", "30%"] }}
-                  transition={{ duration: 0.8 + (i % 5) * 0.1, repeat: Infinity, delay: i * 0.04 }}
+          <h3 className="font-semibold">Voice Commentary</h3>
+          <span className="text-xs text-muted-foreground ml-auto uppercase">{language}</span>
+        </div>
+        <p className="text-sm leading-relaxed whitespace-pre-line">{insights.voiceScript}</p>
+
+        {audioUrl ? (
+          <div className="mt-4 space-y-3 pt-4 border-t border-border">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button onClick={togglePlay} size="icon" className="bg-gradient-primary text-primary-foreground shadow-glow">
+                {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button onClick={stop} size="icon" variant="secondary" title="Stop"><Square className="h-4 w-4" /></Button>
+              <Button onClick={replay} size="icon" variant="secondary" title="Replay"><RotateCcw className="h-4 w-4" /></Button>
+              <span className="text-xs tabular-nums text-muted-foreground min-w-[80px]">
+                {fmt(currentTime)} / {fmt(duration)}
+              </span>
+              <select
+                value={speed}
+                onChange={(e) => { const s = parseFloat(e.target.value); setSpeed(s); if (audioRef.current) audioRef.current.playbackRate = s; }}
+                className="bg-secondary text-sm rounded px-2 py-1 border border-border"
+                title="Playback speed"
+              >
+                {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map(s => <option key={s} value={s}>{s}x</option>)}
+              </select>
+              <div className="flex items-center gap-1">
+                <Button onClick={toggleMute} size="icon" variant="ghost" title="Mute">
+                  {muted || volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </Button>
+                <input
+                  type="range" min={0} max={1} step={0.05} value={muted ? 0 : volume}
+                  onChange={(e) => { const v = parseFloat(e.target.value); setVolume(v); setMuted(v === 0); if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = v === 0; } }}
+                  className="w-20 accent-primary"
                 />
-              ))}
+              </div>
+              <Button asChild size="sm" variant="secondary" className="ml-auto">
+                <a href={audioUrl} download={`voice-commentary-${Date.now()}.mp3`}><Download className="h-4 w-4 mr-1" />Download</a>
+              </Button>
             </div>
-          )}
-        </Card>
-      )}
+            <input
+              type="range" min={0} max={100} step={0.1} value={progress}
+              onChange={(e) => { const p = parseFloat(e.target.value); setProgress(p); seek(p); }}
+              className="w-full accent-primary"
+            />
+            <audio
+              ref={audioRef} src={audioUrl} preload="metadata"
+              onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+              onTimeUpdate={(e) => { const a = e.currentTarget; setCurrentTime(a.currentTime); setProgress((a.currentTime / (a.duration || 1)) * 100); }}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); }}
+            />
+            {playing && (
+              <div className="flex items-end gap-1 h-8 justify-center">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <motion.div key={i} className="w-1 bg-gradient-primary rounded-full"
+                    animate={{ height: ["20%", "100%", "30%"] }}
+                    transition={{ duration: 0.8 + (i % 5) * 0.1, repeat: Infinity, delay: i * 0.04 }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs text-muted-foreground">Audio narration unavailable for this report.</p>
+        )}
+      </Card>
 
       <Section icon={Sparkles} title="Executive Summary">
         <p className="text-sm leading-relaxed">{insights.summary}</p>
