@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
 import { UploadCloud, Loader2, Image as ImageIcon } from "lucide-react";
@@ -44,9 +44,24 @@ function DashboardPage() {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string>("");
   const [report, setReport] = useState<{
-    insights: Insights; imageUrl: string; audioUrl: string | null; language: string; createdAt: string;
+    insights: Insights; imageUrl: string; audioUrl: string | null; language: string; createdAt: string; autoPlay: boolean;
   } | null>(null);
   const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [prefs, setPrefs] = useState<{ voice?: string; speed: number; autoPlay: boolean; autoDownload: boolean }>({ speed: 1, autoPlay: true, autoDownload: false });
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("settings").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      setLanguage((data.language as "en" | "hi") ?? "en");
+      const ap = (data as { auto_play?: boolean }).auto_play;
+      setPrefs({
+        voice: data.voice, speed: Number(data.speed) || 1,
+        autoPlay: typeof ap === "boolean" ? ap : true,
+        autoDownload: !!data.auto_download,
+      });
+    });
+  }, [user]);
 
   const onFile = (f: File | null) => {
     if (!f) return;
@@ -84,7 +99,7 @@ function DashboardPage() {
       let audioUrl: string | null = null;
       try {
         const { audioBase64, error: ttsErr } = await tts({
-          data: { text: insights.voiceScript, language, speed: 1 },
+          data: { text: insights.voiceScript, language, speed: prefs.speed, voice: prefs.voice },
         });
         if (audioBase64) {
           const bin = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
@@ -106,11 +121,15 @@ function DashboardPage() {
         insights: insights as never,
         audio_url: audioUrl,
         language,
-        metadata: { fileName: file.name, size: file.size } as never,
+        metadata: { fileName: file.name, size: file.size, voice: prefs.voice, speed: prefs.speed } as never,
       });
       if (insErr) console.warn(insErr);
 
-      setReport({ insights, imageUrl, audioUrl, language, createdAt: new Date().toISOString() });
+      if (prefs.autoDownload && audioUrl) {
+        const a = document.createElement("a"); a.href = audioUrl; a.download = `voice-commentary-${Date.now()}.mp3`; a.click();
+      }
+
+      setReport({ insights, imageUrl, audioUrl, language, createdAt: new Date().toISOString(), autoPlay: prefs.autoPlay });
       toast.success("Report ready");
     } catch (e) {
       toast.error("Failed", { description: (e as Error).message });

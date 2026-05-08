@@ -74,6 +74,7 @@ export type Database = {
       settings: {
         Row: {
           auto_download: boolean
+          auto_play: boolean
           language: string
           speed: number
           theme: string
@@ -83,6 +84,7 @@ export type Database = {
         }
         Insert: {
           auto_download?: boolean
+          auto_play?: boolean
           language?: string
           speed?: number
           theme?: string
@@ -92,6 +94,7 @@ export type Database = {
         }
         Update: {
           auto_download?: boolean
+          auto_play?: boolean
           language?: string
           speed?: number
           theme?: string

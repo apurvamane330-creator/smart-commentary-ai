@@ -21,6 +21,7 @@ function SettingsPage() {
   const [voice, setVoice] = useState("en-US-Neural2-D");
   const [speed, setSpeed] = useState(1);
   const [autoDownload, setAutoDownload] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -29,6 +30,8 @@ function SettingsPage() {
       if (!data) return;
       setLanguage(data.language); setVoice(data.voice);
       setSpeed(Number(data.speed)); setAutoDownload(data.auto_download);
+      const ap = (data as { auto_play?: boolean }).auto_play;
+      if (typeof ap === "boolean") setAutoPlay(ap);
     });
   }, [user]);
 
@@ -36,8 +39,8 @@ function SettingsPage() {
     if (!user) return;
     setSaving(true);
     const { error } = await supabase.from("settings").upsert({
-      user_id: user.id, language, voice, speed, auto_download: autoDownload, theme: "dark",
-    });
+      user_id: user.id, language, voice, speed, auto_download: autoDownload, auto_play: autoPlay, theme: "dark",
+    } as never);
     setSaving(false);
     if (error) toast.error(error.message); else toast.success("Settings saved");
   };
@@ -65,6 +68,10 @@ function SettingsPage() {
           <input type="range" min={0.5} max={2} step={0.05} value={speed}
             onChange={(e) => setSpeed(parseFloat(e.target.value))} className="w-full" />
         </Field>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="ap">Auto-play voice commentary after analysis</Label>
+          <Switch id="ap" checked={autoPlay} onCheckedChange={setAutoPlay} />
+        </div>
         <div className="flex items-center justify-between">
           <Label htmlFor="ad">Auto-download audio after analysis</Label>
           <Switch id="ad" checked={autoDownload} onCheckedChange={setAutoDownload} />
