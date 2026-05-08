@@ -30,8 +30,8 @@ function SettingsPage() {
       if (!data) return;
       setLanguage(data.language); setVoice(data.voice);
       setSpeed(Number(data.speed)); setAutoDownload(data.auto_download);
-      // @ts-expect-error new column
-      if (typeof data.auto_play === "boolean") setAutoPlay(data.auto_play);
+      const ap = (data as { auto_play?: boolean }).auto_play;
+      if (typeof ap === "boolean") setAutoPlay(ap);
     });
   }, [user]);
 
