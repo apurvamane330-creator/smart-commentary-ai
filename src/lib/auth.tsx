@@ -27,6 +27,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Inject Supabase auth token into TanStack server function calls
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const w = window as unknown as { __origFetch?: typeof fetch };
+    if (!w.__origFetch) w.__origFetch = window.fetch.bind(window);
+    const orig = w.__origFetch!;
+    window.fetch = async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      if (url && url.includes("/_serverFn/")) {
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        if (token) {
+          const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
+          if (!headers.has("authorization")) headers.set("authorization", `Bearer ${token}`);
+          init = { ...(init || {}), headers };
+        }
+      }
+      return orig(input as RequestInfo, init);
+    };
+    return () => { window.fetch = orig; };
+  }, []);
+
   return (
     <Ctx.Provider
       value={{
