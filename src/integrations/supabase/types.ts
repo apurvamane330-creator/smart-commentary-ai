@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          id: string
+          image_url: string
+          insights: Json
+          language: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          insights?: Json
+          language?: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          insights?: Json
+          language?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          auto_download: boolean
+          language: string
+          speed: number
+          theme: string
+          updated_at: string
+          user_id: string
+          voice: string
+        }
+        Insert: {
+          auto_download?: boolean
+          language?: string
+          speed?: number
+          theme?: string
+          updated_at?: string
+          user_id: string
+          voice?: string
+        }
+        Update: {
+          auto_download?: boolean
+          language?: string
+          speed?: number
+          theme?: string
+          updated_at?: string
+          user_id?: string
+          voice?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
