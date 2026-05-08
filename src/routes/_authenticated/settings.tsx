@@ -69,6 +69,10 @@ function SettingsPage() {
             onChange={(e) => setSpeed(parseFloat(e.target.value))} className="w-full" />
         </Field>
         <div className="flex items-center justify-between">
+          <Label htmlFor="ap">Auto-play voice commentary after analysis</Label>
+          <Switch id="ap" checked={autoPlay} onCheckedChange={setAutoPlay} />
+        </div>
+        <div className="flex items-center justify-between">
           <Label htmlFor="ad">Auto-download audio after analysis</Label>
           <Switch id="ad" checked={autoDownload} onCheckedChange={setAutoDownload} />
         </div>
