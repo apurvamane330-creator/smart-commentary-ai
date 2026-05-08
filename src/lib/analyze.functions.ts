@@ -15,7 +15,7 @@ export type Insights = {
   anomalies: string[];
   recommendations: string[];
   voiceScript: string;
-  pythonExtraction: Record<string, unknown> | null;
+  pythonExtractionJson: string | null;
 };
 
 export const analyzeDashboard = createServerFn({ method: "POST" })
@@ -26,7 +26,7 @@ export const analyzeDashboard = createServerFn({ method: "POST" })
     if (!LOVABLE_API_KEY) return { insights: null, error: "LOVABLE_API_KEY missing" };
 
     // 1. Optional Python preprocessing/extraction
-    let pythonExtraction: Record<string, unknown> | null = null;
+    let pythonExtraction: unknown = null;
     const pyUrl = process.env.PYTHON_ANALYSIS_URL;
     const pyToken = process.env.PYTHON_ANALYSIS_TOKEN;
     if (pyUrl) {
@@ -90,7 +90,7 @@ ${pythonExtraction ? `Use this Python OCR/CV extraction as ground truth where he
           anomalies: parsed.anomalies ?? [],
           recommendations: parsed.recommendations ?? [],
           voiceScript: parsed.voiceScript ?? parsed.summary ?? "",
-          pythonExtraction,
+          pythonExtractionJson: pythonExtraction ? JSON.stringify(pythonExtraction) : null,
         },
         error: null,
       };
