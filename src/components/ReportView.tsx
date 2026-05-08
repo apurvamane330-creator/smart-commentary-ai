@@ -184,7 +184,7 @@ export function ReportView({
             )}
           </div>
         ) : (
-          <p className="mt-3 text-xs text-muted-foreground">Audio narration unavailable for this report.</p>
+          <BrowserVoicePlayer text={insights.voiceScript} language={language} autoPlay={autoPlay} />
         )}
       </Card>
 
