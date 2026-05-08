@@ -49,7 +49,7 @@ function DashboardPage() {
   const [language, setLanguage] = useState<"en" | "hi">("en");
   const [prefs, setPrefs] = useState<{ voice?: string; speed: number; autoPlay: boolean; autoDownload: boolean }>({ speed: 1, autoPlay: true, autoDownload: false });
 
-  useState(() => {
+  useEffect(() => {
     if (!user) return;
     supabase.from("settings").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
       if (!data) return;
@@ -61,8 +61,7 @@ function DashboardPage() {
         autoDownload: !!data.auto_download,
       });
     });
-    return undefined;
-  });
+  }, [user]);
 
   const onFile = (f: File | null) => {
     if (!f) return;
