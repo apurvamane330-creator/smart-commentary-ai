@@ -44,9 +44,25 @@ function DashboardPage() {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string>("");
   const [report, setReport] = useState<{
-    insights: Insights; imageUrl: string; audioUrl: string | null; language: string; createdAt: string;
+    insights: Insights; imageUrl: string; audioUrl: string | null; language: string; createdAt: string; autoPlay: boolean;
   } | null>(null);
   const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [prefs, setPrefs] = useState<{ voice?: string; speed: number; autoPlay: boolean; autoDownload: boolean }>({ speed: 1, autoPlay: true, autoDownload: false });
+
+  useState(() => {
+    if (!user) return;
+    supabase.from("settings").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      setLanguage((data.language as "en" | "hi") ?? "en");
+      const ap = (data as { auto_play?: boolean }).auto_play;
+      setPrefs({
+        voice: data.voice, speed: Number(data.speed) || 1,
+        autoPlay: typeof ap === "boolean" ? ap : true,
+        autoDownload: !!data.auto_download,
+      });
+    });
+    return undefined;
+  });
 
   const onFile = (f: File | null) => {
     if (!f) return;
