@@ -230,3 +230,75 @@ function Section({
     </Card>
   );
 }
+
+function BrowserVoicePlayer({ text, language, autoPlay }: { text: string; language: string; autoPlay?: boolean }) {
+  const [playing, setPlaying] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [supported, setSupported] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) { setSupported(false); return; }
+    return () => { try { window.speechSynthesis.cancel(); } catch { /* */ } };
+  }, []);
+
+  const speak = () => {
+    if (!supported) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = language === "hi" ? "hi-IN" : "en-US";
+      u.rate = 1; u.pitch = 1;
+      u.onend = () => { setPlaying(false); setPaused(false); };
+      u.onerror = () => { setPlaying(false); setPaused(false); };
+      window.speechSynthesis.speak(u);
+      setPlaying(true); setPaused(false);
+    } catch { toast.error("Unable to play voice"); }
+  };
+  const pause = () => { window.speechSynthesis.pause(); setPaused(true); };
+  const resume = () => { window.speechSynthesis.resume(); setPaused(false); };
+  const stop = () => { window.speechSynthesis.cancel(); setPlaying(false); setPaused(false); };
+
+  useEffect(() => {
+    if (!autoPlay || !supported || !text) return;
+    const t = setTimeout(speak, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, supported, text]);
+
+  if (!supported) {
+    return <p className="mt-3 text-xs text-muted-foreground">Audio narration unavailable for this report.</p>;
+  }
+  return (
+    <div className="mt-4 pt-4 border-t border-border space-y-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {!playing ? (
+          <Button onClick={speak} size="sm" className="bg-gradient-primary text-primary-foreground shadow-glow">
+            <Play className="h-4 w-4 mr-1" />Play voice
+          </Button>
+        ) : paused ? (
+          <Button onClick={resume} size="sm" className="bg-gradient-primary text-primary-foreground shadow-glow">
+            <Play className="h-4 w-4 mr-1" />Resume
+          </Button>
+        ) : (
+          <Button onClick={pause} size="sm" variant="secondary">
+            <Pause className="h-4 w-4 mr-1" />Pause
+          </Button>
+        )}
+        <Button onClick={stop} size="sm" variant="secondary" disabled={!playing}>
+          <Square className="h-4 w-4 mr-1" />Stop
+        </Button>
+        <span className="text-xs text-muted-foreground">Browser voice (downloadable MP3 unavailable)</span>
+      </div>
+      {playing && !paused && (
+        <div className="flex items-end gap-1 h-6">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <motion.div key={i} className="w-1 bg-gradient-primary rounded-full"
+              animate={{ height: ["20%", "100%", "30%"] }}
+              transition={{ duration: 0.8 + (i % 5) * 0.1, repeat: Infinity, delay: i * 0.04 }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
