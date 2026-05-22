@@ -19,7 +19,8 @@ export const synthesizeSpeech = createServerFn({ method: "POST" })
 
     const langCode = data.language === "hi" ? "hi-IN" : data.language === "mr" ? "mr-IN" : "en-US";
     const defaultVoice = data.language === "hi" ? "hi-IN-Neural2-A" : data.language === "mr" ? "mr-IN-Standard-A" : "en-US-Neural2-D";
-    const voiceName = data.voice ?? defaultVoice;
+    // Ignore a saved voice that doesn't match the requested language (Google TTS rejects mismatches).
+    const voiceName = data.voice && data.voice.startsWith(langCode) ? data.voice : defaultVoice;
 
     try {
       const r = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {

@@ -246,7 +246,14 @@ function BrowserVoicePlayer({ text, language, autoPlay }: { text: string; langua
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = language === "hi" ? "hi-IN" : language === "mr" ? "mr-IN" : "en-US";
+      const targetLang = language === "hi" ? "hi-IN" : language === "mr" ? "mr-IN" : "en-US";
+      u.lang = targetLang;
+      const voices = window.speechSynthesis.getVoices();
+      // Prefer exact lang match; for Marathi fall back to Hindi voice if mr-IN isn't installed.
+      const match = voices.find(v => v.lang === targetLang)
+        || (language === "mr" ? voices.find(v => v.lang === "hi-IN" || v.lang.startsWith("hi")) : undefined)
+        || voices.find(v => v.lang.startsWith(targetLang.split("-")[0]));
+      if (match) u.voice = match;
       u.rate = 1; u.pitch = 1;
       u.onend = () => { setPlaying(false); setPaused(false); };
       u.onerror = () => { setPlaying(false); setPaused(false); };
