@@ -17,8 +17,9 @@ export const synthesizeSpeech = createServerFn({ method: "POST" })
     const key = process.env.GOOGLE_TTS_API_KEY;
     if (!key) return { audioBase64: null, error: "GOOGLE_TTS_API_KEY not configured" };
 
-    const langCode = data.language === "hi" ? "hi-IN" : "en-US";
-    const voiceName = data.voice ?? (data.language === "hi" ? "hi-IN-Neural2-A" : "en-US-Neural2-D");
+    const langCode = data.language === "hi" ? "hi-IN" : data.language === "mr" ? "mr-IN" : "en-US";
+    const defaultVoice = data.language === "hi" ? "hi-IN-Neural2-A" : data.language === "mr" ? "mr-IN-Standard-A" : "en-US-Neural2-D";
+    const voiceName = data.voice ?? defaultVoice;
 
     try {
       const r = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
