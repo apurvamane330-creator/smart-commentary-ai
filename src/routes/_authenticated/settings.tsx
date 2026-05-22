@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 const VOICES_EN = ["en-US-Neural2-D", "en-US-Neural2-F", "en-US-Neural2-A", "en-GB-Neural2-B"];
 const VOICES_HI = ["hi-IN-Neural2-A", "hi-IN-Neural2-B", "hi-IN-Neural2-C", "hi-IN-Neural2-D"];
+const VOICES_MR = ["mr-IN-Standard-A", "mr-IN-Standard-B", "mr-IN-Standard-C", "mr-IN-Wavenet-A"];
+const defaultVoiceFor = (lang: string) => lang === "hi" ? VOICES_HI[0] : lang === "mr" ? VOICES_MR[0] : VOICES_EN[0];
 
 function SettingsPage() {
   const { user } = useAuth();
