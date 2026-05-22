@@ -48,7 +48,7 @@ export const analyzeDashboard = createServerFn({ method: "POST" })
     }
 
     // 2. Gemini multimodal call via Lovable AI Gateway
-    const langName = data.language === "hi" ? "Hindi (Devanagari script)" : "English";
+    const langName = data.language === "hi" ? "Hindi (Devanagari script)" : data.language === "mr" ? "Marathi (Devanagari script)" : "English";
     const sys = `You are a senior business analyst. Analyze the dashboard screenshot and produce STRICT JSON with keys:
 summary, keyInsights (string[]), trends (string[]), anomalies (string[]), recommendations (string[]), voiceScript.
 voiceScript should be 4-6 spoken sentences in ${langName} suitable for narration.
