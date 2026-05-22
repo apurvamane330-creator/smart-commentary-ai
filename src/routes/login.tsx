@@ -19,6 +19,20 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Handle OAuth return: when Supabase finishes processing the URL hash
+  // and a session is established, navigate to the dashboard.
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted && data.session) navigate({ to: "/dashboard", replace: true });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) navigate({ to: "/dashboard", replace: true });
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, [navigate]);
+
+
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
