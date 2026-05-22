@@ -47,17 +47,18 @@ function SettingsPage() {
     if (error) toast.error(error.message); else toast.success("Settings saved");
   };
 
-  const voices = language === "hi" ? VOICES_HI : VOICES_EN;
+  const voices = language === "hi" ? VOICES_HI : language === "mr" ? VOICES_MR : VOICES_EN;
 
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold">Settings</h1>
       <Card className="mt-6 p-6 glass space-y-6">
         <Field label="Default language">
-          <select value={language} onChange={(e) => { setLanguage(e.target.value); setVoice(e.target.value === "hi" ? VOICES_HI[0] : VOICES_EN[0]); }}
+          <select value={language} onChange={(e) => { setLanguage(e.target.value); setVoice(defaultVoiceFor(e.target.value)); }}
             className="bg-secondary text-sm rounded px-3 py-2 border border-border w-full">
             <option value="en">English</option>
             <option value="hi">Hindi</option>
+            <option value="mr">Marathi</option>
           </select>
         </Field>
         <Field label="Voice">
