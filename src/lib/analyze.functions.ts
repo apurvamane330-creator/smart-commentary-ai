@@ -5,7 +5,7 @@ import { z } from "zod";
 const InputSchema = z.object({
   imageUrl: z.string().url(),
   imageBase64: z.string().min(10), // data URL or raw base64
-  language: z.enum(["en", "hi"]).default("en"),
+  language: z.enum(["en", "hi", "mr"]).default("en"),
 });
 
 export type Insights = {
