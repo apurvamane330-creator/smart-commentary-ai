@@ -246,7 +246,7 @@ function BrowserVoicePlayer({ text, language, autoPlay }: { text: string; langua
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = language === "hi" ? "hi-IN" : "en-US";
+      u.lang = language === "hi" ? "hi-IN" : language === "mr" ? "mr-IN" : "en-US";
       u.rate = 1; u.pitch = 1;
       u.onend = () => { setPlaying(false); setPaused(false); };
       u.onerror = () => { setPlaying(false); setPaused(false); };
