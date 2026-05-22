@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const Input = z.object({
   text: z.string().min(1).max(5000),
-  language: z.enum(["en", "hi"]).default("en"),
+  language: z.enum(["en", "hi", "mr"]).default("en"),
   voice: z.string().optional(),
   speed: z.number().min(0.5).max(2).default(1),
 });
