@@ -185,10 +185,11 @@ function DashboardPage() {
       <div className="mt-6 flex flex-wrap items-center gap-3 justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Narration language:</span>
-          <select value={language} onChange={(e) => setLanguage(e.target.value as "en" | "hi")}
+          <select value={language} onChange={(e) => setLanguage(e.target.value as "en" | "hi" | "mr")}
             className="bg-secondary text-sm rounded px-3 py-1.5 border border-border">
             <option value="en">English</option>
             <option value="hi">Hindi</option>
+            <option value="mr">Marathi</option>
           </select>
         </div>
         <div className="flex gap-2">
