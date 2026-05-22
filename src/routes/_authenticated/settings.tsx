@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 const VOICES_EN = ["en-US-Neural2-D", "en-US-Neural2-F", "en-US-Neural2-A", "en-GB-Neural2-B"];
 const VOICES_HI = ["hi-IN-Neural2-A", "hi-IN-Neural2-B", "hi-IN-Neural2-C", "hi-IN-Neural2-D"];
+const VOICES_MR = ["mr-IN-Standard-A", "mr-IN-Standard-B", "mr-IN-Standard-C", "mr-IN-Wavenet-A"];
+const defaultVoiceFor = (lang: string) => lang === "hi" ? VOICES_HI[0] : lang === "mr" ? VOICES_MR[0] : VOICES_EN[0];
 
 function SettingsPage() {
   const { user } = useAuth();
@@ -45,17 +47,18 @@ function SettingsPage() {
     if (error) toast.error(error.message); else toast.success("Settings saved");
   };
 
-  const voices = language === "hi" ? VOICES_HI : VOICES_EN;
+  const voices = language === "hi" ? VOICES_HI : language === "mr" ? VOICES_MR : VOICES_EN;
 
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold">Settings</h1>
       <Card className="mt-6 p-6 glass space-y-6">
         <Field label="Default language">
-          <select value={language} onChange={(e) => { setLanguage(e.target.value); setVoice(e.target.value === "hi" ? VOICES_HI[0] : VOICES_EN[0]); }}
+          <select value={language} onChange={(e) => { setLanguage(e.target.value); setVoice(defaultVoiceFor(e.target.value)); }}
             className="bg-secondary text-sm rounded px-3 py-2 border border-border w-full">
             <option value="en">English</option>
             <option value="hi">Hindi</option>
+            <option value="mr">Marathi</option>
           </select>
         </Field>
         <Field label="Voice">
