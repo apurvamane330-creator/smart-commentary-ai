@@ -53,7 +53,7 @@ function DashboardPage() {
     if (!user) return;
     supabase.from("settings").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
       if (!data) return;
-      setLanguage((data.language as "en" | "hi") ?? "en");
+      setLanguage((data.language as "en" | "hi" | "mr") ?? "en");
       const ap = (data as { auto_play?: boolean }).auto_play;
       setPrefs({
         voice: data.voice, speed: Number(data.speed) || 1,
