@@ -15,6 +15,21 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const navigate = useNavigate();
+
+  // After OAuth redirect back to "/", Supabase processes the URL hash
+  // asynchronously. Listen for the session and forward to the dashboard.
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted && data.session) navigate({ to: "/dashboard", replace: true });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) navigate({ to: "/dashboard", replace: true });
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, [navigate]);
+
   return (
     <div className="min-h-screen">
       <header className="container mx-auto flex items-center justify-between py-6 px-4">
