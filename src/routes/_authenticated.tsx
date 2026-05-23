@@ -2,11 +2,34 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
+
+async function waitForSession() {
+  const { data } = await supabase.auth.getSession();
+  if (data.session) return data.session;
+  if (typeof window === "undefined") return null;
+
+  return await new Promise<Session | null>((resolve) => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    const timer = window.setTimeout(() => {
+      subscription?.unsubscribe();
+      resolve(null);
+    }, 3000);
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) return;
+      window.clearTimeout(timer);
+      subscription?.unsubscribe();
+      resolve(session);
+    });
+    subscription = sub.subscription;
+  });
+}
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login" });
+    const session = await waitForSession();
+    if (!session) throw redirect({ to: "/login" });
   },
   component: Layout,
 });
