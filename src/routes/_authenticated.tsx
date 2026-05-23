@@ -10,17 +10,19 @@ async function waitForSession() {
   if (typeof window === "undefined") return null;
 
   return await new Promise<Session | null>((resolve) => {
+    let subscription: { unsubscribe: () => void } | null = null;
     const timer = window.setTimeout(() => {
-      sub.subscription.unsubscribe();
+      subscription?.unsubscribe();
       resolve(null);
     }, 3000);
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) return;
       window.clearTimeout(timer);
-      sub.subscription.unsubscribe();
+      subscription?.unsubscribe();
       resolve(session);
     });
+    subscription = sub.subscription;
   });
 }
 
