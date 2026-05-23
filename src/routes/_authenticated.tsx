@@ -2,13 +2,14 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 async function waitForSession() {
   const { data } = await supabase.auth.getSession();
   if (data.session) return data.session;
   if (typeof window === "undefined") return null;
 
-  return await new Promise<typeof data.session>((resolve) => {
+  return await new Promise<Session | null>((resolve) => {
     const timer = window.setTimeout(() => {
       sub.subscription.unsubscribe();
       resolve(null);
