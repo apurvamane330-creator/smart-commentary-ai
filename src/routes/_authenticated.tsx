@@ -3,10 +3,30 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { supabase } from "@/integrations/supabase/client";
 
+async function waitForSession() {
+  const { data } = await supabase.auth.getSession();
+  if (data.session) return data.session;
+  if (typeof window === "undefined") return null;
+
+  return await new Promise<typeof data.session>((resolve) => {
+    const timer = window.setTimeout(() => {
+      sub.subscription.unsubscribe();
+      resolve(null);
+    }, 3000);
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) return;
+      window.clearTimeout(timer);
+      sub.subscription.unsubscribe();
+      resolve(session);
+    });
+  });
+}
+
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login" });
+    const session = await waitForSession();
+    if (!session) throw redirect({ to: "/login" });
   },
   component: Layout,
 });
