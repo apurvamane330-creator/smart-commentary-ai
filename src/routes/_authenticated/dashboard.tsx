@@ -45,6 +45,7 @@ function DashboardPage() {
   const [stage, setStage] = useState<string>("");
   const [report, setReport] = useState<{
     insights: Insights; imageUrl: string; audioUrl: string | null; language: string; createdAt: string; autoPlay: boolean;
+    voiceMeta?: { voice?: string; speed?: number; durationSec?: number; sizeBytes?: number; mimeType?: string };
   } | null>(null);
   const [language, setLanguage] = useState<"en" | "hi" | "mr">("en");
   const [prefs, setPrefs] = useState<{ voice?: string; speed: number; autoPlay: boolean; autoDownload: boolean }>({ speed: 1, autoPlay: true, autoDownload: false });
