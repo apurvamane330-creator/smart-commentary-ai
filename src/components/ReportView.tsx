@@ -61,22 +61,6 @@ export function ReportView({
   const fmt = (s: number) => { if (!isFinite(s)) return "0:00"; const m = Math.floor(s / 60); const r = Math.floor(s % 60); return `${m}:${r.toString().padStart(2, "0")}`; };
   const toggleMute = () => { const a = audioRef.current; if (!a) return; a.muted = !a.muted; setMuted(a.muted); };
 
-  useEffect(() => {
-    if (!autoPlay || !audioUrl) return;
-    const a = audioRef.current; if (!a) return;
-    const t = setTimeout(() => { a.play().then(() => setPlaying(true)).catch(() => {}); }, 300);
-    return () => clearTimeout(t);
-  }, [autoPlay, audioUrl]);
-
-  const togglePlay = () => {
-    const a = audioRef.current; if (!a) return;
-    if (a.paused) { a.play(); setPlaying(true); } else { a.pause(); setPlaying(false); }
-  };
-  const stop = () => { const a = audioRef.current; if (!a) return; a.pause(); a.currentTime = 0; setPlaying(false); setProgress(0); setCurrentTime(0); };
-  const replay = () => { const a = audioRef.current; if (!a) return; a.currentTime = 0; a.play(); setPlaying(true); };
-  const seek = (pct: number) => { const a = audioRef.current; if (!a || !a.duration) return; a.currentTime = (pct / 100) * a.duration; };
-  const fmt = (s: number) => { if (!isFinite(s)) return "0:00"; const m = Math.floor(s / 60); const r = Math.floor(s % 60); return `${m}:${r.toString().padStart(2, "0")}`; };
-  const toggleMute = () => { const a = audioRef.current; if (!a) return; a.muted = !a.muted; setMuted(a.muted); };
 
   const copyReport = async () => {
     const text = [
