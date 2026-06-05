@@ -45,6 +45,7 @@ function DashboardPage() {
   const [stage, setStage] = useState<string>("");
   const [report, setReport] = useState<{
     insights: Insights; imageUrl: string; audioUrl: string | null; language: string; createdAt: string; autoPlay: boolean;
+    voiceMeta?: { voice?: string; speed?: number; durationSec?: number; sizeBytes?: number; mimeType?: string };
   } | null>(null);
   const [language, setLanguage] = useState<"en" | "hi" | "mr">("en");
   const [prefs, setPrefs] = useState<{ voice?: string; speed: number; autoPlay: boolean; autoDownload: boolean }>({ speed: 1, autoPlay: true, autoDownload: false });
@@ -97,12 +98,29 @@ function DashboardPage() {
 
       setStage("Generating voice narration…");
       let audioUrl: string | null = null;
+      let audioMeta: { voice?: string; speed: number; durationSec?: number; sizeBytes?: number; mimeType?: string } = {
+        voice: prefs.voice, speed: prefs.speed, mimeType: "audio/mpeg",
+      };
       try {
         const { audioBase64, error: ttsErr } = await tts({
           data: { text: insights.voiceScript, language, speed: prefs.speed, voice: prefs.voice },
         });
         if (audioBase64) {
           const bin = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+          audioMeta.sizeBytes = bin.byteLength;
+          // Probe duration from the in-memory blob before upload
+          try {
+            const blobUrl = URL.createObjectURL(new Blob([bin], { type: "audio/mpeg" }));
+            const dur = await new Promise<number>((resolve) => {
+              const el = document.createElement("audio");
+              el.preload = "metadata"; el.src = blobUrl;
+              el.onloadedmetadata = () => resolve(isFinite(el.duration) ? el.duration : 0);
+              el.onerror = () => resolve(0);
+              setTimeout(() => resolve(0), 4000);
+            });
+            URL.revokeObjectURL(blobUrl);
+            if (dur > 0) audioMeta.durationSec = Math.round(dur * 10) / 10;
+          } catch { /* ignore */ }
           const audioPath = `${user.id}/${Date.now()}.mp3`;
           const upA = await supabase.storage.from("dashboards").upload(audioPath, bin, { contentType: "audio/mpeg" });
           if (!upA.error) {
@@ -121,7 +139,7 @@ function DashboardPage() {
         insights: insights as never,
         audio_url: audioUrl,
         language,
-        metadata: { fileName: file.name, size: file.size, voice: prefs.voice, speed: prefs.speed } as never,
+        metadata: { fileName: file.name, size: file.size, voice: audioMeta },
       });
       if (insErr) console.warn(insErr);
 
@@ -129,7 +147,7 @@ function DashboardPage() {
         const a = document.createElement("a"); a.href = audioUrl; a.download = `voice-commentary-${Date.now()}.mp3`; a.click();
       }
 
-      setReport({ insights, imageUrl, audioUrl, language, createdAt: new Date().toISOString(), autoPlay: prefs.autoPlay });
+      setReport({ insights, imageUrl, audioUrl, language, createdAt: new Date().toISOString(), autoPlay: prefs.autoPlay, voiceMeta: audioMeta });
       toast.success("Report ready");
     } catch (e) {
       toast.error("Failed", { description: (e as Error).message });

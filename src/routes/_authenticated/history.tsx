@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/history")({
 type Row = {
   id: string; image_url: string; audio_url: string | null;
   language: string; created_at: string; insights: Insights;
+  metadata: { voice?: { voice?: string; speed?: number; durationSec?: number; sizeBytes?: number; mimeType?: string } } | null;
 };
 
 function HistoryPage() {
@@ -59,6 +60,7 @@ function HistoryPage() {
           language={open.language}
           createdAt={open.created_at}
           userEmail={user?.email ?? ""}
+          voiceMeta={open.metadata?.voice}
         />
       </div>
     );

@@ -10,8 +10,16 @@ import { Play, Pause, Square, Download, Copy, FileDown, Sparkles, TrendingUp, Al
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
+export type VoiceMeta = {
+  voice?: string;
+  speed?: number;
+  durationSec?: number;
+  sizeBytes?: number;
+  mimeType?: string;
+};
+
 export function ReportView({
-  insights, imageUrl, audioUrl, language, createdAt, userEmail, autoPlay = false,
+  insights, imageUrl, audioUrl, language, createdAt, userEmail, autoPlay = false, voiceMeta,
 }: {
   insights: Insights;
   imageUrl: string;
@@ -20,15 +28,21 @@ export function ReportView({
   createdAt: string;
   userEmail: string;
   autoPlay?: boolean;
+  voiceMeta?: VoiceMeta;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [speed, setSpeed] = useState(1);
+  const [duration, setDuration] = useState(voiceMeta?.durationSec ?? 0);
+  const [speed, setSpeed] = useState(voiceMeta?.speed ?? 1);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (a && voiceMeta?.speed) a.playbackRate = voiceMeta.speed;
+  }, [voiceMeta?.speed, audioUrl]);
 
   useEffect(() => {
     if (!autoPlay || !audioUrl) return;
@@ -46,6 +60,7 @@ export function ReportView({
   const seek = (pct: number) => { const a = audioRef.current; if (!a || !a.duration) return; a.currentTime = (pct / 100) * a.duration; };
   const fmt = (s: number) => { if (!isFinite(s)) return "0:00"; const m = Math.floor(s / 60); const r = Math.floor(s % 60); return `${m}:${r.toString().padStart(2, "0")}`; };
   const toggleMute = () => { const a = audioRef.current; if (!a) return; a.muted = !a.muted; setMuted(a.muted); };
+
 
   const copyReport = async () => {
     const text = [
@@ -145,6 +160,15 @@ export function ReportView({
 
         {audioUrl ? (
           <div className="mt-4 space-y-3 pt-4 border-t border-border">
+            {(voiceMeta?.voice || voiceMeta?.sizeBytes || voiceMeta?.durationSec) && (
+              <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                {voiceMeta?.voice && <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">Voice: {voiceMeta.voice}</span>}
+                {voiceMeta?.speed && <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">Speed: {voiceMeta.speed}x</span>}
+                {voiceMeta?.durationSec ? <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">Duration: {fmt(voiceMeta.durationSec)}</span> : null}
+                {voiceMeta?.sizeBytes ? <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">{(voiceMeta.sizeBytes / 1024).toFixed(0)} KB</span> : null}
+                <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">MP3</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <Button onClick={togglePlay} size="icon" className="bg-gradient-primary text-primary-foreground shadow-glow">
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
