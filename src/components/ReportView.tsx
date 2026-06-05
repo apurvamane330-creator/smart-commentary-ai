@@ -10,8 +10,16 @@ import { Play, Pause, Square, Download, Copy, FileDown, Sparkles, TrendingUp, Al
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
+export type VoiceMeta = {
+  voice?: string;
+  speed?: number;
+  durationSec?: number;
+  sizeBytes?: number;
+  mimeType?: string;
+};
+
 export function ReportView({
-  insights, imageUrl, audioUrl, language, createdAt, userEmail, autoPlay = false,
+  insights, imageUrl, audioUrl, language, createdAt, userEmail, autoPlay = false, voiceMeta,
 }: {
   insights: Insights;
   imageUrl: string;
@@ -20,6 +28,7 @@ export function ReportView({
   createdAt: string;
   userEmail: string;
   autoPlay?: boolean;
+  voiceMeta?: VoiceMeta;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
