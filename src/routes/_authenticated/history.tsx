@@ -60,6 +60,7 @@ function HistoryPage() {
           language={open.language}
           createdAt={open.created_at}
           userEmail={user?.email ?? ""}
+          voiceMeta={open.metadata?.voice}
         />
       </div>
     );
