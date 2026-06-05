@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import type { Insights } from "@/lib/analyze.functions";
+import { useServerFn } from "@tanstack/react-start";
+import type { Insights, HealthScore as HealthScoreT, AnomalyDetail } from "@/lib/analyze.functions";
+import { dashboardQA } from "@/lib/qa.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { Play, Pause, Square, Download, Copy, FileDown, Sparkles, TrendingUp, AlertTriangle, Lightbulb, RotateCcw, Volume2, VolumeX, MessageSquareQuote } from "lucide-react";
+import { Play, Pause, Square, Download, Copy, FileDown, Sparkles, TrendingUp, AlertTriangle, Lightbulb, RotateCcw, Volume2, VolumeX, MessageSquareQuote, Activity, HelpCircle, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
@@ -51,6 +54,7 @@ export function ReportView({
       `\nTrends:\n${insights.trends.map(i => `• ${i}`).join("\n")}`,
       `\nAnomalies:\n${insights.anomalies.map(i => `• ${i}`).join("\n")}`,
       `\nRecommendations:\n${insights.recommendations.map(i => `• ${i}`).join("\n")}`,
+      insights.conclusion ? `\nConclusion:\n${insights.conclusion}` : "",
     ].join("\n");
     await navigator.clipboard.writeText(text);
     toast.success("Report copied");
@@ -92,10 +96,21 @@ export function ReportView({
       y += 6;
     };
     section("Executive Summary", insights.summary);
+    if (insights.healthScore) {
+      const h = insights.healthScore;
+      section("Dashboard Health", [
+        `Overall: ${h.overall}/100 (${h.rating})`,
+        `Performance: ${h.performance}/100`,
+        `Growth: ${h.growth}/100`,
+        `Risk: ${h.risk}/100`,
+        h.explanation,
+      ]);
+    }
     section("Key Insights", insights.keyInsights);
     section("Trends", insights.trends);
     section("Anomalies", insights.anomalies);
     section("Recommendations", insights.recommendations);
+    if (insights.conclusion) section("Conclusion", insights.conclusion);
 
     doc.save(`voicedash-report-${Date.now()}.pdf`);
   };
@@ -115,6 +130,8 @@ export function ReportView({
       <Card className="p-4 glass overflow-hidden">
         <img src={imageUrl} alt="Uploaded dashboard" className="w-full rounded-lg" />
       </Card>
+
+      {insights.healthScore && <HealthScoreCard score={insights.healthScore} />}
 
       <Card className="p-5 glass">
         <div className="flex items-center gap-2 mb-3">
@@ -197,6 +214,18 @@ export function ReportView({
         <Section icon={AlertTriangle} title="Anomalies" items={insights.anomalies} />
         <Section icon={Sparkles} title="Recommendations" items={insights.recommendations} />
       </Grid>
+
+      {insights.anomaliesDetailed && insights.anomaliesDetailed.length > 0 && (
+        <AnomaliesDetailedCard items={insights.anomaliesDetailed} />
+      )}
+
+      {insights.conclusion && (
+        <Section icon={Sparkles} title="Conclusion">
+          <p className="text-sm leading-relaxed">{insights.conclusion}</p>
+        </Section>
+      )}
+
+      <QASection insights={insights} language={language} />
     </motion.div>
   );
 }
@@ -231,6 +260,162 @@ function Section({
   );
 }
 
+function HealthScoreCard({ score }: { score: HealthScoreT }) {
+  const ratingColor =
+    score.overall >= 80 ? "text-emerald-400"
+    : score.overall >= 60 ? "text-sky-400"
+    : score.overall >= 40 ? "text-amber-400"
+    : "text-red-400";
+
+  return (
+    <Card className="p-5 glass">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="h-8 w-8 rounded-lg bg-gradient-primary/20 grid place-items-center">
+          <Activity className="h-4 w-4 text-primary" />
+        </div>
+        <h3 className="font-semibold">Dashboard Health</h3>
+        <div className="ml-auto text-right">
+          <div className={`text-2xl font-bold ${ratingColor}`}>{score.overall}<span className="text-sm text-muted-foreground">/100</span></div>
+          <div className={`text-xs font-medium ${ratingColor}`}>{score.rating}</div>
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-3 gap-3">
+        <Meter label="Performance" value={score.performance} tone="good" />
+        <Meter label="Growth" value={score.growth} tone="good" />
+        <Meter label="Risk" value={score.risk} tone="risk" />
+      </div>
+      {score.explanation && (
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{score.explanation}</p>
+      )}
+    </Card>
+  );
+}
+
+function Meter({ label, value, tone }: { label: string; value: number; tone: "good" | "risk" }) {
+  const color = tone === "risk"
+    ? (value >= 60 ? "bg-red-500" : value >= 30 ? "bg-amber-500" : "bg-emerald-500")
+    : (value >= 75 ? "bg-emerald-500" : value >= 50 ? "bg-sky-500" : value >= 25 ? "bg-amber-500" : "bg-red-500");
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-sm font-semibold tabular-nums">{value}<span className="text-xs text-muted-foreground">/100</span></span>
+      </div>
+      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+        <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className={`h-full ${color}`} />
+      </div>
+    </div>
+  );
+}
+
+function AnomaliesDetailedCard({ items }: { items: AnomalyDetail[] }) {
+  return (
+    <Card className="p-5 glass">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-8 w-8 rounded-lg bg-gradient-primary/20 grid place-items-center">
+          <AlertTriangle className="h-4 w-4 text-amber-400" />
+        </div>
+        <h3 className="font-semibold">Detected Anomalies — Detailed</h3>
+      </div>
+      <div className="grid md:grid-cols-2 gap-3">
+        {items.map((a, i) => (
+          <div key={i} className="rounded-lg border border-border p-3 bg-secondary/30">
+            <div className="font-medium text-sm mb-2">{a.title}</div>
+            <p className="text-xs"><span className="text-muted-foreground">What: </span>{a.what}</p>
+            <p className="text-xs mt-1"><span className="text-muted-foreground">Why: </span>{a.why}</p>
+            <p className="text-xs mt-1"><span className="text-muted-foreground">Impact: </span>{a.impact}</p>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function QASection({ insights, language }: { insights: Insights; language: string }) {
+  const ask = useServerFn(dashboardQA);
+  const [q, setQ] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<{ q: string; a: string }[]>([]);
+
+  const suggestions = language === "hi"
+    ? ["सबसे अच्छा प्रदर्शन कौन सा है?", "मुख्य जोखिम क्या हैं?", "क्या सिफारिश है?"]
+    : language === "mr"
+      ? ["सर्वोत्तम कामगिरी कुठली आहे?", "मुख्य जोखीम काय आहेत?", "तुमची शिफारस काय आहे?"]
+      : ["Which area is performing best?", "What are the biggest risks?", "What should we do next?"];
+
+  const submit = async (question?: string) => {
+    const text = (question ?? q).trim();
+    if (!text) return;
+    setLoading(true);
+    try {
+      const ctx = JSON.stringify({
+        summary: insights.summary,
+        keyInsights: insights.keyInsights,
+        trends: insights.trends,
+        anomalies: insights.anomalies,
+        anomaliesDetailed: insights.anomaliesDetailed,
+        recommendations: insights.recommendations,
+        conclusion: insights.conclusion,
+        healthScore: insights.healthScore,
+        ocr: insights.pythonExtractionJson?.slice(0, 6000),
+      });
+      const { answer, error } = await ask({ data: { question: text, language: language as "en" | "hi" | "mr", context: ctx } });
+      if (error || !answer) throw new Error(error || "No answer");
+      setHistory((h) => [{ q: text, a: answer }, ...h]);
+      setQ("");
+    } catch (e) {
+      toast.error("Q&A failed", { description: (e as Error).message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="p-5 glass">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-8 w-8 rounded-lg bg-gradient-primary/20 grid place-items-center">
+          <HelpCircle className="h-4 w-4 text-primary" />
+        </div>
+        <h3 className="font-semibold">Ask Questions About This Dashboard</h3>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
+          placeholder={language === "hi" ? "अपना प्रश्न लिखें…" : language === "mr" ? "तुमचा प्रश्न लिहा…" : "Type your question…"}
+          disabled={loading}
+        />
+        <Button onClick={() => submit()} disabled={loading || !q.trim()} className="bg-gradient-primary text-primary-foreground">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </Button>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {suggestions.map((s) => (
+          <button
+            key={s}
+            onClick={() => submit(s)}
+            disabled={loading}
+            className="text-xs px-2 py-1 rounded-full border border-border bg-secondary/50 hover:bg-secondary transition"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+      {history.length > 0 && (
+        <div className="mt-4 space-y-3">
+          {history.map((h, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border p-3 bg-secondary/30">
+              <p className="text-xs font-medium text-primary mb-1">Q: {h.q}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-line">{h.a}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function BrowserVoicePlayer({ text, language, autoPlay }: { text: string; language: string; autoPlay?: boolean }) {
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -249,7 +434,6 @@ function BrowserVoicePlayer({ text, language, autoPlay }: { text: string; langua
       const targetLang = language === "hi" ? "hi-IN" : language === "mr" ? "mr-IN" : "en-US";
       u.lang = targetLang;
       const voices = window.speechSynthesis.getVoices();
-      // Prefer exact lang match; for Marathi fall back to Hindi voice if mr-IN isn't installed.
       const match = voices.find(v => v.lang === targetLang)
         || (language === "mr" ? voices.find(v => v.lang === "hi-IN" || v.lang.startsWith("hi")) : undefined)
         || voices.find(v => v.lang.startsWith(targetLang.split("-")[0]));
