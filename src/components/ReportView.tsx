@@ -160,6 +160,15 @@ export function ReportView({
 
         {audioUrl ? (
           <div className="mt-4 space-y-3 pt-4 border-t border-border">
+            {(voiceMeta?.voice || voiceMeta?.sizeBytes || voiceMeta?.durationSec) && (
+              <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                {voiceMeta?.voice && <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">Voice: {voiceMeta.voice}</span>}
+                {voiceMeta?.speed && <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">Speed: {voiceMeta.speed}x</span>}
+                {voiceMeta?.durationSec ? <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">Duration: {fmt(voiceMeta.durationSec)}</span> : null}
+                {voiceMeta?.sizeBytes ? <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">{(voiceMeta.sizeBytes / 1024).toFixed(0)} KB</span> : null}
+                <span className="px-2 py-0.5 rounded-full bg-secondary border border-border">MP3</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <Button onClick={togglePlay} size="icon" className="bg-gradient-primary text-primary-foreground shadow-glow">
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
