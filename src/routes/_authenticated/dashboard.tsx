@@ -147,7 +147,7 @@ function DashboardPage() {
         const a = document.createElement("a"); a.href = audioUrl; a.download = `voice-commentary-${Date.now()}.mp3`; a.click();
       }
 
-      setReport({ insights, imageUrl, audioUrl, language, createdAt: new Date().toISOString(), autoPlay: prefs.autoPlay });
+      setReport({ insights, imageUrl, audioUrl, language, createdAt: new Date().toISOString(), autoPlay: prefs.autoPlay, voiceMeta: audioMeta });
       toast.success("Report ready");
     } catch (e) {
       toast.error("Failed", { description: (e as Error).message });
